@@ -1,6 +1,7 @@
-import express, { Router, json } from 'express';
+import express, { Router, json, NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
+import { IRequestCustom } from './types';
 
 import User from './models/user';
 //import { Router } from 'express';
@@ -17,6 +18,17 @@ mongoose.connect(MONGO_URL)
 const app = express();
 
 app.use(json());
+
+
+app.use((req: IRequestCustom, res: Response, next: NextFunction) => {
+
+  req.user = {
+    _id: '63a8da3ac4773682bc7abb60' // вставьте сюда _id созданного в предыдущем пункте пользователя
+  };
+
+  next();
+});
+
 
 app.use(routes);
 

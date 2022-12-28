@@ -5,6 +5,8 @@ import User from '../models/user';
 // GET /users — возвращает всех пользователей
 // GET /users/:userId - возвращает пользователя по _id
 // POST /users — создаёт пользователя
+// PATCH /users/me — обновляет профиль
+// PATCH /users/me/avatar — обновляет аватар
 
 export const getUsers = async (req: Request, res: Response) => {
   const users = await User.find();
@@ -32,7 +34,7 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const newUser = await User.create(req.body);
     res.status(201).send(newUser);
-    
+
   } catch (error) {
     res.status(500).send({ message: 'Ошибка на стороне сервера' });
   }
