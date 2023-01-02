@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { IRequestCustom } from '../types';
 import User from '../models/user';
-import { NOTFOUND_ERROR_CODE, DEFAULT_ERROR_CODE, BAD_REQUEST_ERROR_CODE } from "../utils/constants";
+import {
+  NOTFOUND_ERROR_CODE,
+  DEFAULT_ERROR_CODE,
+  BAD_REQUEST_ERROR_CODE
+} from "../utils/constants";
 
 
 export const getUsers = async (req: Request, res: Response) => {
@@ -33,7 +37,7 @@ export const createUser = async (req: Request, res: Response) => {
   try {
     const {name, about, avatar} = req.body
     if (!name || !about || !avatar) {
-      res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Введены некорректные данные' });
+      res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные пользователя' });
       return;
     }
     const newUser = await User.create({name, about, avatar});

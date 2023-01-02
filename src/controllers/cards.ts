@@ -1,106 +1,108 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 import { IRequestCustom } from "../types";
 import Card from '../models/card';
-
-// Реализуйте три роута:
-// GET /cards — возвращает все карточки
-// POST /cards — создаёт карточку
-// DELETE /cards/:cardId — удаляет карточку по идентификатору
-
-// PUT /cards/:cardId/likes — поставить лайк карточке
-// DELETE /cards/:cardId/likes — убрать лайк с карточки
+import { NOTFOUND_ERROR_CODE, DEFAULT_ERROR_CODE, BAD_REQUEST_ERROR_CODE, FORBIDDEN_ERROR_CODE } from "../utils/constants";
 
 
 export const getCards = async (req: Request, res: Response) => {
   try {
     const cards = await Card.find();
-  res.status(200).send(cards);
+    res.status(200).send(cards);
   } catch (error) {
-  res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
 };
-
-//В теле POST-запроса на создание карточки передайте JSON-объект с двумя полями: name и link.
 
 export const createCard = async (req: IRequestCustom, res: Response) => {
   try {
-
     const userId = req.user?._id;
+    const { name, link } = req.body;
 
-  //console.log(req.user._id); // _id станет доступен
-  //const { name, link, owner, likes, createdAt } = req.body;
-  // const newCard = await Card.create({ name, link });
-  const { name, link } = req.body;
-  const createdAt = new Date();
-  const likes: string[] = [];
-  const newCard = await Card.create({
-    name,
-    link,
-    owner: userId,
-    likes,
-    createdAt,
-  })
-  res.status(201).send(newCard);
+    if (!name || !link ) {
+      res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные карточки' });
+      return;
+    }
+
+    const newCard = await Card.create({
+      name,
+      link,
+      owner: userId,
+    })
+    res.status(201).send(newCard);
 
   } catch (error) {
-    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
 };
-
 
 export const deleteCardById = async (req: IRequestCustom, res: Response) => {
   try {
-  const userId = req.user?._id;
-  const {cardId} = req.params;
-  Card.findById(cardId)
-    .orFail(new Error('Карточка не найдена'))
-    .then((card) => {
+    const userId = req.user?._id;
+    const {cardId} = req.params;
 
-      if (card.owner.toString() !== userId) {
-        throw new Error;
-        res.status(403).send({ message: 'Можно удалять только свои карточки' });
-        //403 Forbidden ()
-      }
+    const card = await Card.findById(cardId)
 
-      //return Card.findByIdAndDelete(cardId);
-      return Card.deleteOne();  //кажется, что более правильный метод, но выдает ошибку
-      //или просто метод Мангуса delete
-    })
+    if (!card) {
+      res.status(NOTFOUND_ERROR_CODE).send({ message: 'Такого пользователя не существует' });
+      return;
+    }
 
-  res.status(204).send({ message: 'Карточка удалена' });
+    if (card.owner.toString() !== userId) {
+      res.status(FORBIDDEN_ERROR_CODE).send({ message: 'Можно удалять только свои карточки' });
+      return
+    }
+
+    Card.deleteOne();
+    res.status(204).send({ message: 'Карточка удалена' });
 
   } catch (error) {
-    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
-
 };
 
-// PUT /cards/:cardId/likes — поставить лайк карточке
-// DELETE /cards/:cardId/likes — убрать лайк с карточки
+export const likeCard = async (req: IRequestCustom, res: Response) => {
 
-// $addToSet, чтобы добавить элемент в массив, если его там ещё нет;
-// $pull, чтобы убрать.
+  try {
+    const userId = req.user?._id;
+    const { cardId } = req.params;
 
-export const likeCard = (req: IRequestCustom, res: Response) => {
-  const userId = req.user?._id;
-  const { cardId } = req.params;
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { $addToSet: { likes: userId } },
+      { new: true },
+    )
 
-  Card.findByIdAndUpdate(
+    if (!card) {
+      res.status(NOTFOUND_ERROR_CODE).send({ message: 'Такой карточки не существует' });
+        return;
+    }
 
-  cardId,
-  { $addToSet: { likes: userId } }, // добавить _id в массив, если его там нет
-  { new: true },
-  )
+    res.status(201).send(card);
+
+  } catch (error) {
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+  }
 }
 
+export const dislikeCard = async (req: IRequestCustom, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { cardId } = req.params;
 
-export const dislikeCard = (req: IRequestCustom, res: Response) => {
-  const userId = req.user?._id;
-  const { cardId } = req.params;
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { $pull: { likes: userId } },
+      { new: true },
+    )
 
-  Card.findByIdAndUpdate(
-    cardId,
-  { $pull: { likes: userId } }, // убрать _id из массива
-  { new: true },
-  )
+    if (!card) {
+      res.status(NOTFOUND_ERROR_CODE).send({ message: 'Такой карточки не существует' });
+        return;
+    }
+
+    res.status(201).send(card);
+
+  } catch (error) {
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+  }
 }
