@@ -1,4 +1,5 @@
 import { Request } from "express";
+import {Schema} from "mongoose";
 
 export interface IRequestCustom extends Request {
   user?: {
@@ -16,6 +17,6 @@ export interface ICard {
   name: string;
   link: string;
   owner: IUser;
-  likes: string[];
-  createdAt : Date
+  likes: String[],
+  createdAt : Date,
 }

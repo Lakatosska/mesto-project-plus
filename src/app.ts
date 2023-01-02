@@ -33,11 +33,6 @@ app.use((req: IRequestCustom, res: Response, next: NextFunction) => {
 app.use(routes);
 
 
-
-
-
-
-
 // mongoose.connect(MONGO_URL)
 //   .then(() => console.log('Connected successfully to mestodb'))
 //   .catch((err) => console.error(err.message));

@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import { Schema, model } from "mongoose";
+import { IUser } from "../types";
 
-//библиотека validator чтобы использовать ее внутри схемы
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema<IUser>({
   name: {
     type: String,
     required: [true, 'Это обязательное поле'],
@@ -19,9 +19,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Это обязательное поле'],
   },
-
 }, {
   versionKey: false,
 });
 
-export default mongoose.model('user', userSchema);
+export default model<IUser>('user', userSchema);

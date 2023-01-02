@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 import { ICard } from "../types";
 
 
-const cardSchema = new Schema({
+const cardSchema = new Schema<ICard>({
   name: {
     type: String,
     required: [true, 'Это обязательное поле'],
@@ -17,22 +17,18 @@ const cardSchema = new Schema({
     type: Schema.Types.ObjectId,
     required: [true, 'Это обязательное поле'],
   },
-  likes: {
-    type: [{
-      type: Schema.Types.ObjectId,
-    }],
-    default: [],
-  },
-
+  likes: [
+    {
+      type: [Schema.Types.ObjectId],
+      default: [],
+    },
+  ],
   createdAt: {
-    type: Date, default: Date.now,
+    type: Date,
+    default: Date.now,
   },
-
 }, {
   versionKey: false,
 });
-
-
-//export default model('card', cardSchema); без ICard вылезает ошибка в дизлайке карточки
 
 export default model<ICard>('card', cardSchema);

@@ -1,17 +1,16 @@
 import { Request, Response } from "express";
 import { IRequestCustom } from '../types';
 import User from '../models/user';
+import { NOTFOUND_ERROR_CODE, DEFAULT_ERROR_CODE, BAD_REQUEST_ERROR_CODE } from "../utils/constants";
 
-// Реализуйте три роута:
-// GET /users — возвращает всех пользователей
-// GET /users/:userId - возвращает пользователя по _id
-// POST /users — создаёт пользователя
-// PATCH /users/me — обновляет профиль
-// PATCH /users/me/avatar — обновляет аватар
 
 export const getUsers = async (req: Request, res: Response) => {
-  const users = await User.find();
-  res.status(200).send(users);
+  try {
+    const users = await User.find();
+    res.status(200).send(users);
+  } catch (error) {
+    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+  }
 }
 
 export const getUserById = async (req: Request, res: Response) => {
@@ -20,58 +19,64 @@ export const getUserById = async (req: Request, res: Response) => {
     const user = await User.findById(id);
 
     if (!user) {
-      const error = new Error('Пользователь не найден');
-      error.name = 'NotFoundError';
-      throw error;
+      res.status(NOTFOUND_ERROR_CODE).send({ message: 'Пользователь не найден' })
     }
+
     res.status(200).send(user);
 
   } catch (error) {
-    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
 }
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const newUser = await User.create(req.body);
+    const {name, about, avatar} = req.body
+    if (!name || !about || !avatar) {
+      res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Введены некорректные данные' });
+      return;
+    }
+    const newUser = await User.create({name, about, avatar});
     res.status(201).send(newUser);
 
   } catch (error) {
-    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
 }
 
 export const updateUser = async (req: IRequestCustom, res: Response) => {
   try {
-    //req.user._id
-    //const newUser = await User.create(req.body);
-    //User.findById(req.user._id)
+    const userId = req.user?._id
     const { name, about } = req.body;
-    const {id} = req.params;
-    //const user = await User?.findById(id).update({ name, about })
-    //const newUser = user?.update({ name, about })
 
-    const user = User?.findByIdAndUpdate(req.user?._id, { name, about })
+    const user = await User?.findByIdAndUpdate(userId, { name, about })
+    if (!User) {
+      res.status(NOTFOUND_ERROR_CODE).send({ message: 'Такого пользователя не существует' });
+      return;
+    }
 
     res.status(201).send(user);
 
   } catch (error) {
-    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
 }
 
 export const updateAvatar = async (req: IRequestCustom, res: Response) => {
   try {
-
+    const userId = req.user?._id
     const { avatar } = req.body;
-    const {id} = req.params;
-    //const newAvatar = await User?.findById(id).updateOne({ avatar })
 
-    const newAvatar = await User?.findByIdAndUpdate(req.user?._id, { avatar })
+    const newAvatar = await User?.findByIdAndUpdate(userId, { avatar })
+
+    if (!User) {
+      res.status(NOTFOUND_ERROR_CODE).send({ message: 'Такого пользователя не существует' });
+      return;
+    }
 
     res.status(201).send(newAvatar);
 
   } catch (error) {
-    res.status(500).send({ message: 'Ошибка на стороне сервера' });
+    res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
   }
 }
