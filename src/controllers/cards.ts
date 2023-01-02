@@ -54,7 +54,7 @@ export const deleteCardById = async (req: IRequestCustom, res: Response) => {
       return;
     }
 
-    Card.deleteOne();
+    card.deleteOne();
     res.status(204).send({ message: 'Карточка удалена' });
   } catch (error) {
     res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });

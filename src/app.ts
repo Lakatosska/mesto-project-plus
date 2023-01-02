@@ -6,7 +6,7 @@ import routes from './routes/index';
 
 dotenv.config(); // подключаем как мидлвар
 
-const { PORT, MONGO_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
+const { PORT = 3000, MONGO_URL = 'mongodb://localhost:27017/mestodb' } = process.env;
 
 mongoose.connect(MONGO_URL);
 const app = express();
