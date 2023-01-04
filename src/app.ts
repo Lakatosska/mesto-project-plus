@@ -1,6 +1,8 @@
 import express, { json, NextFunction, Response } from 'express';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
+import { rateLimit } from 'express-rate-limit';
+import helmet from 'helmet';
 import { IRequestCustom } from './types';
 import routes from './routes/index';
 
@@ -20,6 +22,18 @@ app.use((req: IRequestCustom, res: Response, next: NextFunction) => {
 });
 
 app.use(routes);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply the rate limiting middleware to all requests
+app.use(limiter);
+
+app.use(helmet());
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
