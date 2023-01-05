@@ -5,6 +5,7 @@ import {
   DEFAULT_ERROR_CODE,
   BAD_REQUEST_ERROR_CODE,
   FORBIDDEN_ERROR_CODE,
+  NOTFOUND_ERROR_CODE,
 } from '../utils/constants';
 
 export const getCards = (req: Request, res: Response) => {
@@ -33,7 +34,7 @@ export const deleteCardById = (req: IRequestCustom, res: Response) => {
   const userId = req.user?._id;
   const { cardId } = req.params;
   Card.findById(cardId)
-    .orFail(new Error('Карточка не найдена'))
+    .orFail(new Error('NotValidId'))
     .then((card) => {
       if (card.owner.toString() !== userId) {
         res.status(FORBIDDEN_ERROR_CODE).send({ message: 'Можно удалять только свои карточки' });
@@ -43,7 +44,10 @@ export const deleteCardById = (req: IRequestCustom, res: Response) => {
       res.status(204).send({ message: 'Карточка удалена' });
     })
     .catch((err) => {
-      res.status(DEFAULT_ERROR_CODE).send(err.message);
+      if (err.message === 'NotValidId') {
+        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+      }
+      res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
     });
 };
 
@@ -55,12 +59,15 @@ export const likeCard = (req: IRequestCustom, res: Response) => {
     { $addToSet: { likes: userId } },
     { new: true },
   )
-    .orFail(new Error('Карточка не найдена'))
+    .orFail(new Error('NotValidId'))
     .then((card) => {
       res.status(201).send(card);
     })
     .catch((err) => {
-      res.status(DEFAULT_ERROR_CODE).send(err.message);
+      if (err.message === 'NotValidId') {
+        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+      }
+      res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
     });
 };
 
@@ -72,11 +79,14 @@ export const dislikeCard = (req: IRequestCustom, res: Response) => {
     { $pull: { likes: userId } },
     { new: true },
   )
-    .orFail(new Error('Карточка не найдена'))
+    .orFail(new Error('NotValidId'))
     .then((card) => {
       res.status(200).send(card);
     })
     .catch((err) => {
-      res.status(DEFAULT_ERROR_CODE).send(err.message);
+      if (err.message === 'NotValidId') {
+        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+      }
+      res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
     });
 };

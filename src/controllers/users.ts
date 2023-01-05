@@ -4,6 +4,7 @@ import User from '../models/user';
 import {
   DEFAULT_ERROR_CODE,
   BAD_REQUEST_ERROR_CODE,
+  NOTFOUND_ERROR_CODE,
 } from '../utils/constants';
 
 export const getUsers = (req: Request, res: Response) => {
@@ -17,13 +18,15 @@ export const getUsers = (req: Request, res: Response) => {
 export const getUserById = (req: Request, res: Response) => {
   const { id } = req.params;
   User.findById(id)
-    .orFail(new Error('Пользователь не найден'))
+    .orFail(new Error('NotValidId'))
     .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
+      } else if (err.message === 'NotValidId') {
+        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
       } else {
         res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
       }
@@ -51,11 +54,13 @@ export const updateUser = (req: IRequestCustom, res: Response) => {
     { name, about },
     { new: true, runValidators: true },
   )
-    .orFail(new Error('Такой пользователь не найден'))
+    .orFail(new Error('NotValidId'))
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
+      } else if (err.message === 'NotValidId') {
+        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
       } else {
         res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
       }
@@ -70,11 +75,13 @@ export const updateAvatar = (req: IRequestCustom, res: Response) => {
     { avatar },
     { new: true, runValidators: true },
   )
-    .orFail(new Error('Такой пользователь не найден'))
+    .orFail(new Error('NotValidId'))
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
+      } else if (err.message === 'NotValidId') {
+        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
       } else {
         res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
       }
