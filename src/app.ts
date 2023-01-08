@@ -5,6 +5,7 @@ import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import { IRequestCustom } from './types';
 import routes from './routes/index';
+import { createUser, login } from './controllers/users';
 
 dotenv.config(); // подключаем как мидлвар
 
@@ -22,6 +23,9 @@ app.use((req: IRequestCustom, res: Response, next: NextFunction) => {
 });
 
 app.use(routes);
+
+app.post('/signin', login);
+app.post('/signup', createUser);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

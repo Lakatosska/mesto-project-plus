@@ -10,7 +10,7 @@ import {
 
 export const getCards = (req: Request, res: Response) => {
   Card.find()
-    .then((cards) => res.status(200).send(cards))
+    .then((cards) => res.send(cards))
     .catch((err) => {
       res.status(DEFAULT_ERROR_CODE).send(err.message);
     });
@@ -61,7 +61,7 @@ export const likeCard = (req: IRequestCustom, res: Response) => {
   )
     .orFail(new Error('NotValidId'))
     .then((card) => {
-      res.status(201).send(card);
+      res.send(card);
     })
     .catch((err) => {
       if (err.message === 'NotValidId') {
@@ -81,7 +81,7 @@ export const dislikeCard = (req: IRequestCustom, res: Response) => {
   )
     .orFail(new Error('NotValidId'))
     .then((card) => {
-      res.status(200).send(card);
+      res.status(204).send(card);
     })
     .catch((err) => {
       if (err.message === 'NotValidId') {

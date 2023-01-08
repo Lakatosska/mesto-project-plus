@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { IRequestCustom } from '../types';
 import User from '../models/user';
 import {
@@ -37,9 +38,14 @@ export const createUser = (req: Request, res: Response) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  User.create({
-    name, about, avatar, email, password,
-  })
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -59,7 +65,7 @@ export const updateUser = (req: IRequestCustom, res: Response) => {
     { new: true, runValidators: true },
   )
     .orFail(new Error('NotValidId'))
-    .then((user) => res.status(201).send(user))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
@@ -80,7 +86,7 @@ export const updateAvatar = (req: IRequestCustom, res: Response) => {
     { new: true, runValidators: true },
   )
     .orFail(new Error('NotValidId'))
-    .then((user) => res.status(201).send(user))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
@@ -90,4 +96,8 @@ export const updateAvatar = (req: IRequestCustom, res: Response) => {
         res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
       }
     });
+};
+
+export const login = (req: Request, res: Response) => {
+  console.log(req, res);
 };
