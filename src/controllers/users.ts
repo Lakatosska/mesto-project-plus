@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+// import jwt from 'jsonwebtoken';
 import { IRequestCustom } from '../types';
 import User from '../models/user';
 import BadRequestError from '../errors/bad-request-err';
@@ -18,7 +18,7 @@ export const getUsers = (req: Request, res: Response, next: NextFunction) => {
 export const getUserById = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   User.findById(id)
-    .orFail(new Error('NotFoundId')) // лучше наверно NotFoundId
+    .orFail(new Error('NotFoundId'))
     .then((user) => {
       res.status(200).send(user);
     })

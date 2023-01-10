@@ -1,14 +1,10 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import validator from 'validator';
-import { IUser } from '../types';
+import { IUser, IUserModel } from '../types';
+import UnauthorizedError from '../errors/unauthorized-err';
 
-interface UserModel extends IUser {
-  findUserByCredentials: (email: string, password: string) =>
-  Promise<Document<unknown, any, IUser>>
-}
-
-const userSchema = new Schema<IUser, UserModel>({
+const userSchema = new Schema<IUser, IUserModel>({
   name: {
     type: String,
     minlength: [2, 'Минимальная длина 2 символа'],
@@ -30,9 +26,7 @@ const userSchema = new Schema<IUser, UserModel>({
     unique: true,
     required: true,
     validate: {
-      validator(email: string) {
-        validator.isEmail(email);
-      },
+      validator: (email: string) => validator.isEmail(email),
     },
   },
   password: {
@@ -58,7 +52,7 @@ userSchema.static('findUserByCredentials', function findUserByCredentials(email:
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            return Promise.reject(new UnauthorizedError('Неправильные почта или пароль'));
           }
 
           return user; // теперь user доступен
@@ -66,4 +60,4 @@ userSchema.static('findUserByCredentials', function findUserByCredentials(email:
     });
 });
 
-export default model<IUser>('user', userSchema);
+export default model<IUser, IUserModel>('user', userSchema);
