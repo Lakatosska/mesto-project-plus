@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
-// import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { IRequestCustom } from '../types';
 import User from '../models/user';
 import BadRequestError from '../errors/bad-request-err';
@@ -99,54 +99,18 @@ export const updateAvatar = (req: IRequestCustom, res: Response, next: NextFunct
     });
 };
 
-export const login = (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  return User.findOne({ email })
-    .then((user) => {
-      if (!user) {
-        // пользователь не найден — отклоняем промис
-        // с ошибкой и переходим в блок catch
-        return Promise.reject(new Error('Неправильные почта или пароль'));
-      }
-      // пользователь найден: высчитать хеш пароля и сравнить его с хешем в базе;
-      return bcrypt.compare(password, user.password);
-    })
-    .then((matched) => {
-      if (!matched) {
-        // хеши не совпали — отклоняем промис
-        return Promise.reject(new Error('Неправильные почта или пароль'));
-      }
-
-      // аутентификация успешна
-      return res.send({ message: 'Всё верно!' });
-    })
-    .catch((err) => {
-      // возвращаем ошибку аутентификации
-      res
-        .status(401)
-        .send({ message: err.message });
-    });
-};
-
-/*
-export const login = (req: Request, res: Response) => {
+export const login = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
       // создадим токен
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
-        expiresIn: '7d'
+        expiresIn: '7d',
       });
 
       // вернём токен
       res.send({ token });
     })
-    .catch((err) => {
-      res
-        .status(401)
-        .send({ message: err.message });
-    });
+    .catch(next);
 };
-*/
