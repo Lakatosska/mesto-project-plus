@@ -22,3 +22,8 @@ export interface ICard {
   likes: String[],
   createdAt : Date,
 }
+
+export interface IErrorWithStatusCode {
+  statusCode: number,
+  message: string,
+}

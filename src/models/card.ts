@@ -15,6 +15,7 @@ const cardSchema = new Schema<ICard>({
   owner: {
     type: Schema.Types.ObjectId,
     required: [true, 'Это обязательное поле'],
+    ref: 'user',
   },
   likes: [
     {

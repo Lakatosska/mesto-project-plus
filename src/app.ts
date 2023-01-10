@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { IRequestCustom } from './types';
 import routes from './routes/index';
 import { createUser, login } from './controllers/users';
+import errorHandler from './middlewares/error-handler';
 
 dotenv.config(); // подключаем как мидлвар
 
@@ -38,6 +39,8 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.use(helmet());
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
