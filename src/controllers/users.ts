@@ -114,3 +114,21 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
     })
     .catch(next);
 };
+
+export const getCurrentUser = (req: IRequestCustom, res: Response, next: NextFunction) => {
+  const userId = req.user?._id;
+  User.findById(userId)
+    .orFail(new Error('NotFoundId'))
+    .then((user) => {
+      res.status(200).send(user);
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Пользователь не найден'));
+      } else {
+        next(err);
+      }
+    });
+};

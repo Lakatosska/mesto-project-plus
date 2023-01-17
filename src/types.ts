@@ -1,10 +1,15 @@
 import { Request } from 'express';
 import { Document, Model } from 'mongoose';
+import { JwtPayload } from 'jsonwebtoken';
 
 export interface IRequestCustom extends Request {
   user?: {
     _id: string,
   }
+}
+
+export interface IRequestAuth extends Request {
+  user?: string | JwtPayload,
 }
 
 export interface IUser {

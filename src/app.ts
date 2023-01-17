@@ -7,6 +7,7 @@ import { IRequestCustom } from './types';
 import routes from './routes/index';
 import { createUser, login } from './controllers/users';
 import errorHandler from './middlewares/error-handler';
+import auth from './middlewares/auth';
 
 dotenv.config(); // подключаем как мидлвар
 
@@ -23,10 +24,14 @@ app.use((req: IRequestCustom, res: Response, next: NextFunction) => {
   next();
 });
 
-app.use(routes);
-
 app.post('/signin', login);
 app.post('/signup', createUser);
+
+// авторизация
+app.use(auth);
+
+// роуты, которым авторизация нужна
+app.use(routes);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
