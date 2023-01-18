@@ -32,6 +32,8 @@ const userSchema = new Schema<IUser, IUserModel>({
   password: {
     type: String,
     required: true,
+    // хеш пароля не будет возвращаться из базы (по умолчанию)
+    select: false,
   },
 }, {
   versionKey: false,
@@ -41,13 +43,11 @@ const userSchema = new Schema<IUser, IUserModel>({
 // у него будет два параметра — почта и пароль
 userSchema.static('findUserByCredentials', function findUserByCredentials(email: string, password: string) {
   // попытаемся найти пользователя по почте
-  return this.findOne({ email }) // this — это модель User
+  return this.findOne({ email }).select('+password')
     .then((user) => {
-      // не нашёлся — отклоняем промис
       if (!user) {
         return Promise.reject(new Error('Неправильные почта или пароль'));
       }
-
       // нашёлся — сравниваем хеши
       return bcrypt.compare(password, user.password)
         .then((matched) => {

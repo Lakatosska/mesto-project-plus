@@ -1,13 +1,13 @@
-import express, { json, NextFunction, Response } from 'express';
+import express, { json } from 'express';
 import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
-import { IRequestCustom } from './types';
 import routes from './routes/index';
 import { createUser, login } from './controllers/users';
 import errorHandler from './middlewares/error-handler';
 import auth from './middlewares/auth';
+import { requestLogger, errorLogger } from './middlewares/logger';
 
 dotenv.config(); // подключаем как мидлвар
 
@@ -17,12 +17,7 @@ mongoose.connect(MONGO_URL);
 const app = express();
 app.use(json());
 
-app.use((req: IRequestCustom, res: Response, next: NextFunction) => {
-  req.user = {
-    _id: '63a8da3ac4773682bc7abb60',
-  };
-  next();
-});
+app.use(requestLogger);
 
 app.post('/signin', login);
 app.post('/signup', createUser);
@@ -32,6 +27,10 @@ app.use(auth);
 
 // роуты, которым авторизация нужна
 app.use(routes);
+
+app.use(errorLogger);
+
+app.use(errorHandler);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -44,8 +43,6 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.use(helmet());
-
-app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

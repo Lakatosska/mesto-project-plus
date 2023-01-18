@@ -1,6 +1,7 @@
 import { NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { IRequestAuth } from '../types';
+import UnauthorizedError from '../errors/unauthorized-err';
 
 export default (req: IRequestAuth, res: Response, next: NextFunction) => {
   // тут будет вся авторизация
@@ -9,9 +10,7 @@ export default (req: IRequestAuth, res: Response, next: NextFunction) => {
 
   // убеждаемся, что он есть или начинается с Bearer
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res
-      .status(401)
-      .send({ message: 'Необходима авторизация' });
+    throw new UnauthorizedError('Необходима авторизация');
   }
 
   // извлечём токен
@@ -22,9 +21,7 @@ export default (req: IRequestAuth, res: Response, next: NextFunction) => {
     // попытаемся верифицировать токен
     payload = jwt.verify(token, 'some-secret-key');
   } catch (err) {
-    return res
-      .status(401)
-      .send({ message: 'Необходима авторизация' });
+    throw new UnauthorizedError('Что-то не так с токеном');
   }
 
   req.user = payload; // записываем пейлоуд в объект запроса
