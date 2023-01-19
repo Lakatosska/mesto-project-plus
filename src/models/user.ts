@@ -8,30 +8,35 @@ const userSchema = new Schema<IUser, IUserModel>({
   name: {
     type: String,
     minlength: [2, 'Минимальная длина 2 символа'],
-    maxlength: 30,
+    maxlength: [30, 'Превышена максимальная длина в 30 символов'],
     default: 'Жак-Ив Кусто',
   },
   about: {
     type: String,
     minlength: [2, 'Минимальная длина 2 символа'],
-    maxlength: 200,
+    maxlength: [200, 'Превышена максимальная длина в 200 символов'],
     default: 'Исследователь',
   },
   avatar: {
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator: (avatar: string) => validator.isURL(avatar),
+      message: 'Некорректная ссылка',
+    },
   },
   email: {
     type: String,
     unique: true,
-    required: true,
+    required: [true, 'Это обязательное поле'],
     validate: {
       validator: (email: string) => validator.isEmail(email),
+      message: 'Некорректный e-mail',
     },
   },
   password: {
     type: String,
-    required: true,
+    required: [true, 'Это обязательное поле'],
     // хеш пароля не будет возвращаться из базы (по умолчанию)
     select: false,
   },
