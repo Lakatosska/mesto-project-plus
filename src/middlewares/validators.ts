@@ -25,5 +25,23 @@ const updateAvatarValidator = celebrate({
 // auth
 
 // card
+const createCardValidator = celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30).required(),
+    link: Joi.string().pattern(urlRegex).required(),
+  }),
+});
 
-export { getUserByIdValidator, updateUserValidator, updateAvatarValidator };
+const cardIdValidator = celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().alphanum().length(24).required(),
+  }),
+});
+
+export {
+  getUserByIdValidator,
+  updateUserValidator,
+  updateAvatarValidator,
+  createCardValidator,
+  cardIdValidator,
+};
