@@ -1,57 +1,55 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { IRequestCustom } from '../types';
 import Card from '../models/card';
-import {
-  DEFAULT_ERROR_CODE,
-  BAD_REQUEST_ERROR_CODE,
-  FORBIDDEN_ERROR_CODE,
-  NOTFOUND_ERROR_CODE,
-} from '../utils/constants';
+import BadRequestError from '../errors/bad-request-err';
+import NotFoundError from '../errors/not-found-err';
+import ForbiddenError from '../errors/forbidden-err';
 
-export const getCards = (req: Request, res: Response) => {
+export const getCards = (req: Request, res: Response, next: NextFunction) => {
   Card.find()
-    .then((cards) => res.status(200).send(cards))
+    .then((cards) => res.send(cards))
     .catch((err) => {
-      res.status(DEFAULT_ERROR_CODE).send(err.message);
+      next(err);
     });
 };
 
-export const createCard = (req: IRequestCustom, res: Response) => {
+export const createCard = (req: IRequestCustom, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { name, link } = req.body;
   Card.create({ name, link, owner: userId })
     .then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании карточки' });
+        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
       } else {
-        res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+        next(err);
       }
     });
 };
 
-export const deleteCardById = (req: IRequestCustom, res: Response) => {
+export const deleteCardById = (req: IRequestCustom, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { cardId } = req.params;
   Card.findById(cardId)
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotFoundId'))
     .then((card) => {
+      //  card.owner.equals(req.user._id)
       if (card.owner.toString() !== userId) {
-        res.status(FORBIDDEN_ERROR_CODE).send({ message: 'Можно удалять только свои карточки' });
+        next(new ForbiddenError('Можно удалять только свои карточки'));
         return;
       }
       card.deleteOne();
       res.status(204).send({ message: 'Карточка удалена' });
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+      if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Карточка не найдена'));
       }
-      res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+      next(err);
     });
 };
 
-export const likeCard = (req: IRequestCustom, res: Response) => {
+export const likeCard = (req: IRequestCustom, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
@@ -59,19 +57,19 @@ export const likeCard = (req: IRequestCustom, res: Response) => {
     { $addToSet: { likes: userId } },
     { new: true },
   )
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotFoundId'))
     .then((card) => {
-      res.status(201).send(card);
+      res.send(card);
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+      if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Карточка не найдена'));
       }
-      res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+      next(err);
     });
 };
 
-export const dislikeCard = (req: IRequestCustom, res: Response) => {
+export const dislikeCard = (req: IRequestCustom, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
@@ -79,14 +77,14 @@ export const dislikeCard = (req: IRequestCustom, res: Response) => {
     { $pull: { likes: userId } },
     { new: true },
   )
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotFoundId'))
     .then((card) => {
-      res.status(200).send(card);
+      res.status(204).send(card);
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+      if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Карточка не найдена'));
       }
-      res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+      next(err);
     });
 };

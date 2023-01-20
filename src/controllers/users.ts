@@ -1,52 +1,63 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import * as bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { IRequestCustom } from '../types';
 import User from '../models/user';
-import {
-  DEFAULT_ERROR_CODE,
-  BAD_REQUEST_ERROR_CODE,
-  NOTFOUND_ERROR_CODE,
-} from '../utils/constants';
+import BadRequestError from '../errors/bad-request-err';
+import NotFoundError from '../errors/not-found-err';
+import ConflictError from '../errors/conflict-err';
 
-export const getUsers = (req: Request, res: Response) => {
+export const getUsers = (req: Request, res: Response, next: NextFunction) => {
   User.find()
     .then((users) => res.status(200).send(users))
     .catch((err) => {
-      res.status(DEFAULT_ERROR_CODE).send(err.message);
+      next(err);
     });
 };
 
-export const getUserById = (req: Request, res: Response) => {
+export const getUserById = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   User.findById(id)
-    .orFail(new Error('NotValidId'))
+    .orFail(new Error('NotFoundId'))
     .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      } else if (err.message === 'NotValidId') {
-        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+        next(err);
       }
     });
 };
 
-export const createUser = (req: Request, res: Response) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+export const createUser = (req: Request, res: Response, next: NextFunction) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Такой пользователь уже существует'));
       } else {
-        res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+        next(err);
       }
     });
 };
 
-export const updateUser = (req: IRequestCustom, res: Response) => {
+export const updateUser = (req: IRequestCustom, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { name, about } = req.body;
   User.findByIdAndUpdate(
@@ -54,20 +65,20 @@ export const updateUser = (req: IRequestCustom, res: Response) => {
     { name, about },
     { new: true, runValidators: true },
   )
-    .orFail(new Error('NotValidId'))
-    .then((user) => res.status(201).send(user))
+    .orFail(new Error('NotFoundId'))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      } else if (err.message === 'NotValidId') {
-        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+        next(err);
       }
     });
 };
 
-export const updateAvatar = (req: IRequestCustom, res: Response) => {
+export const updateAvatar = (req: IRequestCustom, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { avatar } = req.body;
   User.findByIdAndUpdate(
@@ -75,15 +86,49 @@ export const updateAvatar = (req: IRequestCustom, res: Response) => {
     { avatar },
     { new: true, runValidators: true },
   )
-    .orFail(new Error('NotValidId'))
-    .then((user) => res.status(201).send(user))
+    .orFail(new Error('NotFoundId'))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      } else if (err.message === 'NotValidId') {
-        res.status(NOTFOUND_ERROR_CODE).send('Карточка не найдена');
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(DEFAULT_ERROR_CODE).send({ message: 'Ошибка на стороне сервера' });
+        next(err);
+      }
+    });
+};
+
+export const login = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      // создадим токен
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
+        expiresIn: '7d',
+      });
+
+      // вернём токен
+      res.send({ token });
+    })
+    .catch(next);
+};
+
+export const getCurrentUser = (req: IRequestCustom, res: Response, next: NextFunction) => {
+  const userId = req.user?._id;
+  User.findById(userId)
+    .orFail(new Error('NotFoundId'))
+    .then((user) => {
+      res.status(200).send(user);
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.message === 'NotFoundId') {
+        next(new NotFoundError('Пользователь не найден'));
+      } else {
+        next(err);
       }
     });
 };

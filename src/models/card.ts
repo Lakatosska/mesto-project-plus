@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import validator from 'validator';
 import { ICard } from '../types';
 
 const cardSchema = new Schema<ICard>({
@@ -11,14 +12,20 @@ const cardSchema = new Schema<ICard>({
   link: {
     type: String,
     required: [true, 'Это обязательное поле'],
+    validate: {
+      validator: (value: string) => validator.isURL(value),
+      message: 'Некорректная ссылка',
+    },
   },
   owner: {
     type: Schema.Types.ObjectId,
     required: [true, 'Это обязательное поле'],
+    ref: 'user',
   },
   likes: [
     {
       type: [Schema.Types.ObjectId],
+      ref: 'user',
       default: [],
     },
   ],
