@@ -10,6 +10,7 @@ import auth from './middlewares/auth';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import { loginValidator, createUserValidator } from './middlewares/validators';
 import { limiter } from './utils/constants';
+import NotFoundError from './errors/not-found-err';
 
 dotenv.config(); // подключаем как мидлвар
 
@@ -34,6 +35,10 @@ app.use(auth);
 
 // роуты, которым авторизация нужна
 app.use(routes);
+
+app.use((req, res, next) => {
+  next(new NotFoundError('Страница не найдена'));
+});
 
 app.use(errorLogger);
 

@@ -114,7 +114,7 @@ export const getCurrentUser = (req: IRequestCustom, res: Response, next: NextFun
   User.findById(userId)
     .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => {
-      res.status(200).send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
