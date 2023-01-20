@@ -3,11 +3,13 @@ import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
+import { errors } from 'celebrate';
 import routes from './routes/index';
 import { createUser, login } from './controllers/users';
 import errorHandler from './middlewares/error-handler';
 import auth from './middlewares/auth';
 import { requestLogger, errorLogger } from './middlewares/logger';
+import { loginValidator, createUserValidator } from './middlewares/validators';
 
 dotenv.config(); // подключаем как мидлвар
 
@@ -19,8 +21,8 @@ app.use(json());
 
 app.use(requestLogger);
 
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.post('/signin', loginValidator, login);
+app.post('/signup', createUserValidator, createUser);
 
 // авторизация
 app.use(auth);
@@ -30,7 +32,9 @@ app.use(routes);
 
 app.use(errorLogger);
 
-app.use(errorHandler);
+app.use(errors()); // обработчик ошибок celebrate
+
+app.use(errorHandler); // централизованный обработчик, подключаем самым последним
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

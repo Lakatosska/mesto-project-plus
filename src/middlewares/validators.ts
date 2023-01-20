@@ -2,7 +2,6 @@ import { celebrate, Joi } from 'celebrate';
 import { urlRegex } from '../utils/constants';
 
 // user
-
 const getUserByIdValidator = celebrate({
   params: Joi.object().keys({
     id: Joi.string().alphanum().length(24).required(),
@@ -23,6 +22,22 @@ const updateAvatarValidator = celebrate({
 });
 
 // auth
+const loginValidator = celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }),
+});
+
+const createUserValidator = celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(200),
+    avatar: Joi.string().pattern(urlRegex),
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }),
+});
 
 // card
 const createCardValidator = celebrate({
@@ -42,6 +57,8 @@ export {
   getUserByIdValidator,
   updateUserValidator,
   updateAvatarValidator,
+  loginValidator,
+  createUserValidator,
   createCardValidator,
   cardIdValidator,
 };

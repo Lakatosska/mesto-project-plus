@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import validator from 'validator';
 import { IUser, IUserModel } from '../types';
 import UnauthorizedError from '../errors/unauthorized-err';
+import { urlRegex } from '../utils/constants';
 
 const userSchema = new Schema<IUser, IUserModel>({
   name: {
@@ -21,7 +22,7 @@ const userSchema = new Schema<IUser, IUserModel>({
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
-      validator: (avatar: string) => validator.isURL(avatar),
+      validator: (value: string) => urlRegex.test(value),
       message: 'Некорректная ссылка',
     },
   },
