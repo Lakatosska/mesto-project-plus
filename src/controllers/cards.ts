@@ -31,7 +31,7 @@ export const deleteCardById = (req: IRequestCustom, res: Response, next: NextFun
   const userId = req.user?._id;
   const { cardId } = req.params;
   Card.findById(cardId)
-    .orFail(new Error('NotFoundId'))
+    .orFail(new NotFoundError('Карточка не найдена'))
     .then((card) => {
       //  card.owner.equals(req.user._id)
       if (card.owner.toString() !== userId) {
@@ -42,9 +42,6 @@ export const deleteCardById = (req: IRequestCustom, res: Response, next: NextFun
       res.status(204).send({ message: 'Карточка удалена' });
     })
     .catch((err) => {
-      if (err.message === 'NotFoundId') {
-        next(new NotFoundError('Карточка не найдена'));
-      }
       next(err);
     });
 };
@@ -57,14 +54,11 @@ export const likeCard = (req: IRequestCustom, res: Response, next: NextFunction)
     { $addToSet: { likes: userId } },
     { new: true },
   )
-    .orFail(new Error('NotFoundId'))
+    .orFail(new NotFoundError('Карточка не найдена'))
     .then((card) => {
       res.send(card);
     })
     .catch((err) => {
-      if (err.message === 'NotFoundId') {
-        next(new NotFoundError('Карточка не найдена'));
-      }
       next(err);
     });
 };
@@ -77,14 +71,11 @@ export const dislikeCard = (req: IRequestCustom, res: Response, next: NextFuncti
     { $pull: { likes: userId } },
     { new: true },
   )
-    .orFail(new Error('NotFoundId'))
+    .orFail(new NotFoundError('Карточка не найдена'))
     .then((card) => {
       res.status(204).send(card);
     })
     .catch((err) => {
-      if (err.message === 'NotFoundId') {
-        next(new NotFoundError('Карточка не найдена'));
-      }
       next(err);
     });
 };
