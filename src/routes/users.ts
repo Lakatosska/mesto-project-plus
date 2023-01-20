@@ -15,8 +15,8 @@ import {
 const userRoutes = Router();
 
 userRoutes.get('/', getUsers);
-userRoutes.get('/:id', getUserByIdValidator, getUserById);
 userRoutes.get('/me', getCurrentUser);
+userRoutes.get('/:id', getUserByIdValidator, getUserById);
 userRoutes.patch('/me', updateUserValidator, updateUser);
 userRoutes.patch('/me/avatar', updateAvatarValidator, updateAvatar);
 
